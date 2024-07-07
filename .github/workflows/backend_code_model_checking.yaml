@@ -3,11 +3,11 @@ name: Checking Code/Models 🔎
 on:
   workflow_call:
     inputs:
-      models_directory:
-        description: The model directory to scan.
+      directory:
+        description: The dependant directory to scan.
         required: false
         type: string
-        default: model
+        default: database
 
 jobs:
 
@@ -19,23 +19,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Get Database changes
-        id: db_modified
+      - name: Get code changes
+        id: directory_code_modified
         uses: Ana06/get-changed-files@v2.1.0
         with:
           filter: |
-            ${{ inputs.models_directory }}/*
-            ${{ inputs.models_directory }}/*/*
+            ${{ inputs.directory }}/*
+            ${{ inputs.directory }}/*/*
       - name: Get Code changes
-        id: code_modified
+        id: other_code_modified
         uses: Ana06/get-changed-files@v2.1.0
         with:
           filter: |
             *
-            !${{ inputs.models_directory }}/*
-            !${{ inputs.models_directory }}/*/*
+            !${{ inputs.directory }}/*
+            !${{ inputs.directory }}/*/*
       - name: Fail if mix changes
-        if: ${{ (join(steps.db_modified.outputs.all, ',') != '' && join(steps.code_modified.outputs.all, ',') != '') }}
+        if: ${{ (join(steps.directory_code_modified.outputs.all, ',') != '' && join(steps.other_code_modified.outputs.all, ',') != '') }}
         run: |
-          echo "::error ::Database models and code are both changed, this is not allowed!"
+          echo "::error ::Mixed code changes that is not allowed! It could be database and/or command changes that happened with other code changes."
           exit 1
